@@ -27,25 +27,41 @@ type SingleTimer struct {
 	deleted     bool
 }
 
-var timers []SingleTimer
+var timers map[string]SingleTimer
 
+func init() {
+	timers = make(map[string]SingleTimer)
+}
+
+//Health Check
 func Health() {
 	log.Println("200")
 }
 
-func Create() *SingleTimer {
+//Create a new timer
+func Create(id string, destination string, messege string, enabled bool, interval uint) *SingleTimer {
+	// func Create() *SingleTimer {
 	t := SingleTimer{
 
-		ID:          "s.ID",
-		Destination: "https://requestb.in/14tpopr1",
-		Message:     "s.Message",
-		Enabled:     true,
+		ID:          id,
+		Destination: destination,
+		Message:     messege,
+		Enabled:     enabled,
 	}
 	log.Println("new timer", t.Message)
-	t.interval = time.Second
+	t.interval = time.Duration(interval) * time.Second
 	t.quit = make(chan struct{})
+	timers[id] = t
 	return &t
 }
+
+//Get - get timer by ID
+func Get(id string) *SingleTimer {
+	t := timers[id]
+	return &t
+}
+
+//Stop the Timer
 func (s *SingleTimer) Stop() {
 	if s.deleted {
 		return
@@ -54,12 +70,17 @@ func (s *SingleTimer) Stop() {
 
 	close(s.quit)
 }
+
+//SetInterval - set the timer interval
 func (s *SingleTimer) SetInterval(interval time.Duration) {
 	s.interval = interval
-	s.ticker.Stop()
-	s.ticker = time.NewTicker(s.interval)
+	if s.ticker != nil {
+		s.ticker.Stop()
+		s.ticker = time.NewTicker(s.interval)
+	}
 }
 
+//Run - Make the timer work
 func (s *SingleTimer) Run() {
 
 	go func() {
