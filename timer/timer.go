@@ -1,6 +1,7 @@
 package timer
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -85,10 +86,16 @@ func Get(id string) (*SingleTimer, error) {
 
 // Update the timer parameters
 func (s *SingleTimer) Update(r Request) {
-	s.Destination = r.Destination
-	s.Message = r.Message
+	if r.Destination != "" {
+		s.Destination = r.Destination
+	}
+	if r.Destination != "" {
+		s.Message = r.Message
+	}
 	s.Enabled = r.Enabled
-	s.SetInterval(time.Duration(r.Interval) * resolution)
+	if r.Interval > 0 {
+		s.SetInterval(time.Duration(r.Interval) * resolution)
+	}
 }
 
 //Stop the Timer
@@ -117,9 +124,13 @@ func (s *SingleTimer) SetInterval(interval time.Duration) {
 }
 
 //Start - Make the timer work
-func (s *SingleTimer) Start() {
+func (s *SingleTimer) Start() error {
 	if s.Running {
-		return
+		return nil
+	}
+
+	if s.Destination == "" {
+		return errors.New("cannot start timer with no destination")
 	}
 	s.Running = true
 	go func() {
@@ -143,4 +154,5 @@ func (s *SingleTimer) Start() {
 			}
 		}
 	}()
+	return nil
 }

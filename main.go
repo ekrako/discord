@@ -96,7 +96,12 @@ func GetTimer(w http.ResponseWriter, r *http.Request) {
 //StartTimer Make the timer running
 func StartTimer(w http.ResponseWriter, r *http.Request) {
 	thisTimer := r.Context().Value("timer").(*timer.SingleTimer)
-	thisTimer.Start()
+
+	err := thisTimer.Start()
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
 	render.JSON(w, r, thisTimer)
 }
 
@@ -119,7 +124,7 @@ func UpdateTimer(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, thisTimer)
 }
 
-// Delete an existing timer
+// DeleteTimer an existing timer
 func DeleteTimer(w http.ResponseWriter, r *http.Request) {
 	thisTimer := r.Context().Value("timer").(*timer.SingleTimer)
 
